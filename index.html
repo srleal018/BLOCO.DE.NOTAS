@@ -2,41 +2,56 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <title>NoteHub Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Hub de Notas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuração fornecida
+        const firebaseConfig = {
+            apiKey: "AIzaSyC08uBaH3okS0pdOkMM9wWS2c_sTt6_UTU",
+            authDomain: "bloco-de-notas-85103.firebaseapp.com",
+            projectId: "bloco-de-notas-85103",
+            storageBucket: "bloco-de-notas-85103.firebasestorage.app",
+            messagingSenderId: "890697512853",
+            appId: "1:890697512853:web:7bff196880f1b010d5289c",
+            measurementId: "G-SKDH1JR99T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // Lógica de Login
+        window.loginGoogle = () => {
+            signInWithPopup(auth, provider).then(() => {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('hub-screen').classList.remove('hidden');
+            });
+        };
+    </script>
 </head>
-<body>
-    <div id="login-screen">
-        <h1>NoteHub Pro</h1>
-        <button id="btn-login">Entrar com Google</button>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="auth-screen" class="flex flex-col items-center justify-center h-screen">
+        <h1 class="text-3xl font-bold mb-6">Bem-vindo ao Hub de Notas</h1>
+        <button onclick="loginGoogle()" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition">
+            Entrar com Google
+        </button>
     </div>
 
-    <div id="app" style="display: none;">
-        <aside id="sidebar">
-            <button id="btn-novo">+ Nova Nota</button>
-            <ul id="lista-arquivos"></ul>
-        </aside>
-
-        <main id="editor-container">
-            <div class="toolbar">
-                <button onclick="execCmd('bold')"><b>B</b></button>
-                <button onclick="execCmd('italic')"><i>I</i></button>
-                <select onchange="execCmd('fontName', this.value)">
-                    <option value="Arial">Arial</option>
-                    <option value="Courier New">Courier</option>
-                    <option value="Times New Roman">Times</option>
-                </select>
-                <button onclick="execCmd('hiliteColor', 'yellow')">🟨</button>
-                <button onclick="adicionarImagem()">🖼️</button>
-                <button onclick="inserirMapaMental()">🧠 Mapa</button>
-                <button onclick="window.print()">🖨️</button>
+    <div id="hub-screen" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Meus Projetos</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-lg shadow cursor-pointer hover:border-blue-500 border-2">
+                <h3 class="font-semibold">Novo Projeto</h3>
+                <p class="text-gray-500 text-sm">Clique para iniciar...</p>
             </div>
-            <input type="text" id="titulo-nota" placeholder="Título da nota...">
-            <div id="editor" contenteditable="true"></div>
-            <button id="btn-salvar">Salvar no Cloud</button>
-        </main>
+        </div>
     </div>
-    <script type="module" src="app.js"></script>
 </body>
 </html>
