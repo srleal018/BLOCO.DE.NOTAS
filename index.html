@@ -3,47 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NoteHub Pro - Seu Espaço Criativo</title>
+    <title>NoteHub Pro - Editor Completo</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.5.3/style/jsmind.css" />
+
     <script>
-        // Configuração do Tema Tailwind
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0ea5e9', // Azul Destaque
-                            600: '#0284c7',
-                            700: '#0369a1',
-                        },
-                        dark: '#0f172a', // Slate Escuro para menus
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' },
+                        dark: '#0f172a',
                     }
                 }
             }
         }
     </script>
+    
     <style>
-        /* Estilo para simular o efeito de grifar texto */
-        .highlight { background-color: #fef08a; } /* Amarelo suave */
-        
-        /* Transições suaves */
-        .transition-all { transition: all 0.2s ease-in-out; }
-        
-        /* Esconder scrollbar mas manter funcionalidade */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Ajustes para o editor Quill preencher a tela */
+        #editor-container { height: 60vh; font-size: 16px; }
+        /* Ajustes para o jsMind preencher a tela */
+        #jsmind_container { width: 100%; height: 60vh; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // SUA CONFIGURAÇÃO FIREBASE (Mantida exatamente igual)
+        
         const firebaseConfig = {
             apiKey: "AIzaSyC08uBaH3okS0pdOkMM9wWS2c_sTt6_UTU",
             authDomain: "bloco-de-notas-85103.firebaseapp.com",
@@ -54,216 +47,204 @@
             measurementId: "G-SKDH1JR99T"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Elementos da UI
-        const authScreen = document.getElementById('auth-screen');
-        const hubScreen = document.getElementById('hub-screen');
-        const userPhoto = document.getElementById('user-photo');
-        const userName = document.getElementById('user-name');
-
-        // Lógica de Login/Logout
         window.loginGoogle = () => {
-            signInWithPopup(auth, provider).catch(error => console.error("Erro no login:", error));
+            signInWithPopup(auth, provider).catch(error => alert("Erro no login: " + error.message));
         };
-        window.logout = () => {
-            signOut(auth).catch(error => console.error("Erro no logout:", error));
-        };
+        window.logout = () => { signOut(auth); };
 
-        // Observador de Estado de Autenticação
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Usuário logado
-                authScreen.classList.add('hidden');
-                hubScreen.classList.remove('hidden');
-                hubScreen.classList.add('flex'); // Ativa o layout flex do hub
-                
-                userPhoto.src = user.photoURL;
-                userName.textContent = user.displayName;
-                // Aqui você carregaria os projetos do Firestore futuramente
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('flex');
+                document.getElementById('user-photo').src = user.photoURL;
+                document.getElementById('user-name').textContent = user.displayName;
+                showView('dashboard'); // Mostra o painel inicial ao logar
             } else {
-                // Usuário deslogado
-                authScreen.classList.remove('hidden');
-                hubScreen.classList.add('hidden');
-                hubScreen.classList.remove('flex');
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('flex');
             }
         });
-
-        // Funções de UI Simples (Apenas para demonstração visual)
-        window.showEditor = (type) => {
-            alert('Abrindo editor de: ' + type + '. (Lógica de carregar nota vai aqui)');
-            // Futuramente: esconder lista de projetos, mostrar container do editor
-        }
     </script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
 
     <div id="auth-screen" class="flex items-center justify-center min-h-screen bg-white">
-        <div class="grid md:grid-cols-2 gap-8 p-12 max-w-6xl w-full">
-            <div class="flex flex-col justify-center">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-3 bg-brand-500 text-white rounded-xl text-2xl shadow-lg shadow-brand-100">
-                        <i class="fa-solid fa-note-sticky">
-
-                        </i>
-                    </div>
-                    <h1 class="text-4xl font-extrabold text-dark tracking-tight">Note<span class="text-brand-500">Hub</span> Pro</h1>
-                </div>
-                <p class="text-xl text-slate-600 mb-10">Organize suas ideias, crie mapas mentais e colabore em projetos. Tudo em um só lugar, seguro e acessível.</p>
-                
-                <button onclick="loginGoogle()" class="flex items-center justify-center gap-4 w-full md:w-auto self-start bg-white border border-slate-300 text-slate-700 px-8 py-4 rounded-xl shadow-sm hover:bg-slate-50 hover:border-slate-400 transition-all text-lg font-medium">
-                    <img src="https://auth.firebase.google.com/v1/images/2x/google-logo.svg" alt="Google" class="h-6">
-                    Entrar com o Google
-                </button>
-            </div>
-            <div class="hidden md:flex items-center justify-center bg-brand-50 rounded-3xl p-10">
-                <img src="https://cdni.iconscout.com/illustration/premium/webp/searching-files-in-folder-5380252-4493393.png" alt="Ilustração Hub" class="max-w-sm">
-            </div>
+        <div class="text-center p-8">
+            <h1 class="text-4xl font-extrabold text-dark mb-4">Note<span class="text-brand-500">Hub</span> Pro</h1>
+            <p class="mb-8 text-slate-600">Faça login para acessar suas ferramentas.</p>
+            <button onclick="loginGoogle()" class="bg-brand-500 text-white px-8 py-4 rounded-xl shadow hover:bg-brand-600 transition-all font-medium">
+                Entrar com Google
+            </button>
         </div>
     </div>
 
-    <div id="hub-screen" class="hidden min-h-screen flex-row">
+    <div id="main-app" class="hidden min-h-screen flex-row">
         
         <aside class="w-64 bg-dark text-slate-200 p-6 flex flex-col shadow-xl z-10">
             <div class="flex items-center gap-3 mb-10">
-                <div class="p-2 bg-brand-500 text-white rounded-lg text-lg">
-                    <i class="fa-solid fa-note-sticky"></i>
-                </div>
+                <i class="fa-solid fa-note-sticky text-brand-500 text-2xl"></i>
                 <span class="text-2xl font-bold text-white">NoteHub</span>
             </div>
 
-            <nav class="space-y-3 flex-grow">
-                <a href="#" class="flex items-center gap-3.5 bg-brand-600 text-white px-4 py-3 rounded-lg font-medium transition-all">
-                    <i class="fa-solid fa-columns-tablet w-5 text-center"></i>
-                    Meu Hub
-                </a>
-                <a href="#" class="flex items-center gap-3.5 text-slate-400 hover:text-white px-4 py-3 rounded-lg transition-all hover:bg-slate-800">
-                    <i class="fa-solid fa-folder w-5 text-center"></i>
-                    Projetos
-                </a>
-                <a href="#" class="flex items-center gap-3.5 text-slate-400 hover:text-white px-4 py-3 rounded-lg transition-all hover:bg-slate-800">
-                    <i class="fa-solid fa-star w-5 text-center"></i>
-                    Favoritos
-                </a>
+            <nav class="space-y-2 flex-grow">
+                <button onclick="showView('dashboard')" class="w-full flex items-center gap-3 bg-brand-600 text-white px-4 py-3 rounded-lg font-medium transition-all text-left hover:bg-brand-500">
+                    <i class="fa-solid fa-house w-5 text-center"></i> Meu Hub
+                </button>
+                <button onclick="showView('text-editor')" class="w-full flex items-center gap-3 text-slate-400 hover:text-white px-4 py-3 rounded-lg transition-all hover:bg-slate-800 text-left">
+                    <i class="fa-solid fa-file-lines w-5 text-center"></i> Novo Texto
+                </button>
+                <button onclick="showView('map-editor')" class="w-full flex items-center gap-3 text-slate-400 hover:text-white px-4 py-3 rounded-lg transition-all hover:bg-slate-800 text-left">
+                    <i class="fa-solid fa-diagram-project w-5 text-center"></i> Novo Mapa Mental
+                </button>
             </nav>
 
             <div class="border-t border-slate-700 pt-6 mt-6">
-                <div class="flex items-center gap-3 mb-4">
+                <div class="flex items-center gap-3">
                     <img id="user-photo" src="" alt="Avatar" class="h-10 w-10 rounded-full border-2 border-brand-500">
                     <div>
-                        <div id="userNameArea" class="font-medium text-white truncate w-40">
-                            Olá, <span id="user-name">Usuário</span>
-                        </div>
-                        <button onclick="logout()" class="text-sm text-slate-400 hover:text-brand-500 transition-all">Sair da conta</button>
+                        <div id="user-name" class="font-medium text-white truncate w-32 text-sm">Usuário</div>
+                        <button onclick="logout()" class="text-xs text-slate-400 hover:text-red-400 transition-all">Sair</button>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <main class="flex-1 bg-slate-50 flex flex-col">
+        <main class="flex-1 bg-slate-50 flex flex-col h-screen overflow-hidden">
             
-            <header class="bg-white border-b border-slate-100 p-6 flex items-center justify-between shadow-sm">
-                <h2 class="text-3xl font-bold text-slate-950 tracking-tight">Bem-vindo de volta!</h2>
-                <button class="bg-brand-500 text-white px-5 py-2.5 rounded-xl font-medium shadow hover:bg-brand-600 transition-all flex items-center gap-2">
-                    <i class="fa-solid fa-plus text-sm"></i>
-                    Novo Projeto
-                </button>
+            <header class="bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm">
+                <h2 id="header-title" class="text-2xl font-bold text-slate-800">Meu Hub</h2>
             </header>
 
-            <div class="flex-1 p-8 lg:p-12 overflow-y-auto no-scrollbar">
+            <div class="flex-1 p-8 overflow-y-auto">
                 
-                <section class="mb-12">
-                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-5">Criar Nova Nota Rapidamente</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button onclick="showEditor('texto')" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-200 hover:shadow-md transition-all flex items-center gap-5 text-left">
-                            <div class="p-4 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100 transition-all">
-                                <i class="fa-solid fa-file-lines text-2xl"></i>
-                            </div>
+                <div id="view-dashboard" class="view-section block">
+                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-5">Criar Nova Nota</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <button onclick="showView('text-editor')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-300 transition-all flex items-center gap-5 text-left">
+                            <div class="p-4 bg-blue-50 text-blue-600 rounded-xl"><i class="fa-solid fa-file-lines text-2xl"></i></div>
                             <div>
-                                <h4 class="font-semibold text-lg text-slate-900">Bloco de Texto</h4>
-                                <p class="text-slate-500">Anotações simples, listas e textos formatados.</p>
+                                <h4 class="font-semibold text-lg text-slate-900">Bloco de Texto Avançado</h4>
+                                <p class="text-slate-500 text-sm">Com fontes, grifos e formatação.</p>
                             </div>
                         </button>
-                        <button onclick="showEditor('mapa')" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-200 hover:shadow-md transition-all flex items-center gap-5 text-left">
-                            <div class="p-4 bg-purple-50 text-purple-600 rounded-xl group-hover:bg-purple-100 transition-all">
-                                <i class="fa-solid fa-diagram-project text-2xl"></i>
-                            </div>
+                        <button onclick="showView('map-editor')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-300 transition-all flex items-center gap-5 text-left">
+                            <div class="p-4 bg-purple-50 text-purple-600 rounded-xl"><i class="fa-solid fa-diagram-project text-2xl"></i></div>
                             <div>
                                 <h4 class="font-semibold text-lg text-slate-900">Mapa Mental</h4>
-                                <p class="text-slate-500">Visualize ideias e conecte conceitos visualmente.</p>
+                                <p class="text-slate-500 text-sm">Conecte ideias visualmente.</p>
                             </div>
                         </button>
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Notas e Projetos Recentes</h3>
-                        <a href="#" class="text-sm font-medium text-brand-600 hover:text-brand-700">Ver todos</a>
+                <div id="view-text-editor" class="view-section hidden flex-col h-full bg-white rounded-xl shadow p-4 border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <input type="text" placeholder="Título da Nota" class="text-2xl font-bold outline-none text-slate-800 w-full">
+                        <button onclick="alert('Salvar no Firebase em breve!')" class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600">Salvar</button>
                     </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group hover:shadow-lg transition-all flex flex-col h-64 cursor-pointer">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Texto</span>
-                                <i class="fa-solid fa-ellipsis-vertical text-slate-400 hover:text-slate-600"></i>
-                            </div>
-                            <h4 class="font-semibold text-lg text-slate-950 mb-2 truncate group-hover:text-brand-600">Ideias para o Brainstorming</h4>
-                            <p class="text-slate-600 text-sm flex-grow overflow-hidden line-clamp-4">
-                                1. Lançamento da campanha de Verão.<br>
-                                2. Revisão do orçamento de Marketing.<br>
-                                3. <span class="highlight">Contratar novo designer</span> até dia 15.<br>
-                                4. Pesquisa de satisfação com clientes.
-                            </p>
-                            <div class="border-t border-slate-100 pt-4 mt-4 text-xs text-slate-400">
-                                Atualizado há 10 min
-                            </div>
-                        </div>
+                    <div id="editor-container"></div>
+                </div>
 
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group hover:shadow-lg transition-all flex flex-col h-64 cursor-pointer">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-xs font-medium bg-purple-50 text-purple-700 px-3 py-1 rounded-full">Mapa Mental</span>
-                                <i class="fa-solid fa-ellipsis-vertical text-slate-400 hover:text-slate-600"></i>
-                            </div>
-                            <h4 class="font-semibold text-lg text-slate-950 mb-2 truncate group-hover:text-brand-600">Estrutura do Novo Site</h4>
-                            <div class="flex-grow flex items-center justify-center bg-slate-50 rounded-lg text-purple-300 border border-slate-100">
-                                <i class="fa-solid fa-diagram-project text-4xl"></i>
-                                </div>
-                            <div class="border-t border-slate-100 pt-4 mt-4 text-xs text-slate-400">
-                                Atualizado ontem
-                            </div>
+                <div id="view-map-editor" class="view-section hidden flex-col h-full bg-white rounded-xl shadow p-4 border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800">Mapa Mental Interativo</h3>
+                        <div class="gap-2 flex">
+                            <button onclick="addMapNode()" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600"><i class="fa-solid fa-plus"></i> Nó</button>
+                            <button onclick="alert('Salvar no Firebase em breve!')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600">Salvar</button>
                         </div>
-
-                        <div class="border-2 border-dashed border-slate-200 rounded-2xl h-64 flex flex-col items-center justify-center text-center group hover:border-brand-300 hover:bg-brand-50 transition-all cursor-pointer p-6">
-                            <div class="text-brand-400 group-hover:text-brand-600 transition-all mb-3">
-                                <i class="fa-solid fa-circle-plus text-5xl"></i>
-                            </div>
-                            <h4 class="font-semibold text-slate-700 group-hover:text-brand-700">Criar Novo Projeto</h4>
-                            <p class="text-sm text-slate-500">Começe algo novo hoje.</p>
-                        </div>
-
                     </div>
-                </section>
-
-                <section id="editor-container" class="hidden mt-10 bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-                    <div class="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
-                        <button class="p-2.5 rounded-lg hover:bg-slate-100 text-slate-600" title="Negrito"><i class="fa-solid fa-bold"></i></button>
-                        <button class="p-2.5 rounded-lg hover:bg-slate-100 text-slate-600" title="Itálico"><i class="fa-solid fa-italic"></i></button>
-                        <button class="p-2.5 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-800" title="Grifar"><i class="fa-solid fa-highlighter"></i></button>
-                        <div class="h-6 w-px bg-slate-200 mx-2"></div>
-                        <button class="p-2.5 rounded-lg hover:bg-slate-100 text-slate-600" title="Mapa Mental"><i class="fa-solid fa-diagram-project"></i> Convert to Map</button>
-                        <button class="ml-auto bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600">Salvar</button>
-                    </div>
-                    <textarea class="w-full h-96 p-4 border border-slate-100 rounded-xl focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none resize-none" placeholder="Começe a digitar sua nota brilhante aqui..."></textarea>
-                </section>
+                    <p class="text-xs text-slate-500 mb-2">Clique em um nó e aperte o botão "+ Nó" para expandir a ideia.</p>
+                    <div id="jsmind_container"></div>
+                </div>
 
             </div>
         </main>
     </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmind@0.5.3/js/jsmind.js"></script>
+
+    <script>
+        // --- LÓGICA DE NAVEGAÇÃO DOS MENUS ---
+        function showView(viewName) {
+            // Esconde todas as seções
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            
+            // Atualiza o Título do Header
+            const headerTitle = document.getElementById('header-title');
+            
+            // Mostra a seção desejada
+            if (viewName === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                headerTitle.innerText = "Meu Hub de Projetos";
+            } else if (viewName === 'text-editor') {
+                document.getElementById('view-text-editor').classList.remove('hidden');
+                document.getElementById('view-text-editor').classList.add('flex');
+                headerTitle.innerText = "Editor de Texto";
+            } else if (viewName === 'map-editor') {
+                document.getElementById('view-map-editor').classList.remove('hidden');
+                document.getElementById('view-map-editor').classList.add('flex');
+                headerTitle.innerText = "Editor de Mapa Mental";
+                
+                // Necessário renderizar o mapa caso a tela esteja sendo aberta pela primeira vez
+                if(!jm) initJsMind();
+            }
+        }
+
+        // --- INICIALIZAR EDITOR DE TEXTO (QUILL) ---
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Comece a escrever sua ideia brilhante aqui...',
+            modules: {
+                toolbar: [
+                    [{ 'font': [] }, { 'size': [] }], // Fonte e Tamanho
+                    ['bold', 'italic', 'underline', 'strike'], // Formatação básica
+                    [{ 'color': [] }, { 'background': [] }],   // Cor e GRIFO (Highlight)
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], // Listas
+                    [{ 'align': [] }],
+                    ['clean'] // Limpar formatação
+                ]
+            }
+        });
+
+        // --- INICIALIZAR MAPA MENTAL (jsMind) ---
+        var jm = null;
+        function initJsMind() {
+            var mind = {
+                "meta": { "name": "demo", "author": "hizzgdev@163.com", "version": "0.2" },
+                "format": "node_array",
+                "data": [
+                    {"id":"root", "isroot":true, "topic":"Ideia Central"},
+                    {"id":"sub1", "parentid":"root", "topic":"Sub-ideia A", "background-color":"#0ea5e9"},
+                    {"id":"sub2", "parentid":"root", "topic":"Sub-ideia B", "background-color":"#8b5cf6"}
+                ]
+            };
+            var options = {
+                container: 'jsmind_container',
+                editable: true,       // Permite editar clicando duas vezes
+                theme: 'primary'
+            };
+            jm = jsMind.show(options, mind);
+        }
+
+        // Função para adicionar um novo nó ao mapa mental pelo botão
+        function addMapNode() {
+            if(!jm) return;
+            var selected_node = jm.get_selected_node();
+            if(!selected_node) {
+                alert("Por favor, selecione um nó (caixa) clicando nela primeiro!");
+                return;
+            }
+            var nodeid = jsMind.util.uuid.newid();
+            var topic = '* Novo Tópico *';
+            jm.add_node(selected_node, nodeid, topic);
+        }
+    </script>
 </body>
 </html>
