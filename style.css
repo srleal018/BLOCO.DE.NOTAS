@@ -1,0 +1,7 @@
+body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; }
+#login-screen { margin: auto; text-align: center; }
+#app { display: flex; width: 100%; }
+#sidebar { width: 250px; background: #f4f4f4; padding: 20px; border-right: 1px solid #ccc; }
+#editor-container { flex: 1; padding: 20px; display: flex; flex-direction: column; }
+#editor { border: 1px solid #ddd; height: 300px; padding: 10px; margin-top: 10px; overflow-y: auto; }
+.toolbar { margin-bottom: 10px; }
