@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Hub de Notas</title>
+</head>
+<body>
+    <div id="login-screen">
+        <h1>Meu Bloco de Notas</h1>
+        <button id="btn-login">Entrar com Google</button>
+    </div>
+
+    <div id="app" style="display: none;">
+        <aside id="sidebar">
+            <button id="btn-novo">Nova Nota +</button>
+            <ul id="lista-arquivos"></ul>
+            <button id="btn-logout">Sair</button>
+        </aside>
+
+        <main id="editor-container">
+            <div class="toolbar">
+                <button onclick="document.execCommand('bold')"><b>B</b></button>
+                <button onclick="document.execCommand('italic')"><i>I</i></button>
+                <button onclick="document.execCommand('hiliteColor', false, 'yellow')">Grifar</button>
+                <button onclick="window.print()">Imprimir</button>
+            </div>
+            <input type="text" id="titulo-nota" placeholder="Título da nota...">
+            <div id="editor" contenteditable="true"></div>
+            <button id="btn-salvar">Salvar Nota</button>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
