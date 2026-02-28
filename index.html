@@ -26,7 +26,7 @@
 
         /* REGRAS DE IMPRESSÃO */
         @media print {
-            .no-print { display: none !important; } /* Esconde menus, botões, sidebars */
+            .no-print { display: none !important; }
             body { background: white !important; }
             main { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
             #editor-container { border: none !important; height: auto !important; }
@@ -55,7 +55,6 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Variáveis Globais de Estado
         window.currentUser = null;
         window.db = db;
         window.collection = collection;
@@ -69,9 +68,7 @@
         window.serverTimestamp = serverTimestamp;
         window.currentProjectId = null;
 
-        window.loginGoogle = () => {
-            signInWithPopup(auth, provider).catch(error => showModal("Erro no Login", error.message));
-        };
+        window.loginGoogle = () => { signInWithPopup(auth, provider).catch(error => showModal("Erro no Login", error.message)); };
         window.logout = () => { signOut(auth); };
 
         onAuthStateChanged(auth, (user) => {
@@ -83,7 +80,7 @@
                 document.getElementById('user-photo').src = user.photoURL;
                 document.getElementById('user-name').textContent = user.displayName;
                 showView('dashboard');
-                loadProjects(); // Carrega os projetos do banco
+                loadProjects();
             } else {
                 window.currentUser = null;
                 document.getElementById('auth-screen').classList.remove('hidden');
@@ -94,6 +91,19 @@
     </script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
+
+    <div id="custom-context-menu" class="hidden fixed z-[100] bg-white border border-slate-200 shadow-xl rounded-lg w-40 overflow-hidden text-sm">
+        <button onclick="handleContextAction('edit')" class="w-full text-left px-4 py-2 hover:bg-slate-50 transition flex items-center gap-2">
+            <i class="fa-solid fa-pen text-slate-400"></i> Editar/Renomear
+        </button>
+        <button onclick="handleContextAction('delete')" class="w-full text-left px-4 py-2 hover:bg-slate-50 text-red-600 transition flex items-center gap-2">
+            <i class="fa-solid fa-trash text-red-400"></i> Excluir
+        </button>
+        <div class="h-px bg-slate-100"></div>
+        <button onclick="handleContextAction('move')" class="w-full text-left px-4 py-2 hover:bg-slate-50 transition flex items-center gap-2">
+            <i class="fa-solid fa-arrows-up-down-left-right text-slate-400"></i> Mover
+        </button>
+    </div>
 
     <div id="custom-modal" class="hidden no-print fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-opacity">
         <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl transform scale-100 transition-transform">
@@ -109,9 +119,7 @@
     <div id="auth-screen" class="flex items-center justify-center min-h-screen bg-white">
         <div class="text-center p-8">
             <h1 class="text-4xl font-extrabold text-dark mb-4">Note<span class="text-brand-500">Hub</span> Pro</h1>
-            <button onclick="loginGoogle()" class="bg-brand-500 text-white px-8 py-4 rounded-xl shadow hover:bg-brand-600 transition-all font-medium">
-                Entrar com Google
-            </button>
+            <button onclick="loginGoogle()" class="bg-brand-500 text-white px-8 py-4 rounded-xl shadow hover:bg-brand-600 transition-all font-medium">Entrar com Google</button>
         </div>
     </div>
 
@@ -143,21 +151,17 @@
         </aside>
 
         <main class="flex-1 bg-slate-50 flex flex-col h-screen overflow-hidden">
-            
             <header class="no-print bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm">
                 <h2 id="header-title" class="text-2xl font-bold text-slate-800">Meu Hub</h2>
             </header>
 
             <div class="flex-1 p-8 overflow-y-auto">
-                
                 <div id="view-dashboard" class="view-section block no-print">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Meus Projetos</h3>
                         <button onclick="loadProjects()" class="text-brand-500 hover:text-brand-700"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
                     </div>
-                    <div id="projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        <p class="text-slate-500 text-sm">Carregando projetos...</p>
-                    </div>
+                    <div id="projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
                 </div>
 
                 <div id="view-text-editor" class="view-section hidden flex-col h-full bg-white rounded-xl shadow p-4 border border-slate-200">
@@ -169,7 +173,7 @@
                             <button onclick="saveProject('text')" class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
                         </div>
                     </div>
-                    <div id="editor-container" class="print-content"></div>
+                    <div id="editor-container"></div>
                 </div>
 
                 <div id="view-map-editor" class="view-section hidden flex-col h-full bg-white rounded-xl shadow p-4 border border-slate-200">
@@ -182,9 +186,8 @@
                             <button onclick="saveProject('map')" class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
                         </div>
                     </div>
-                    <div id="jsmind_container" class="print-content"></div>
+                    <div id="jsmind_container"></div>
                 </div>
-
             </div>
         </main>
     </div>
@@ -200,31 +203,50 @@
             const modal = document.getElementById('custom-modal');
             const btnCancel = document.getElementById('modal-cancel');
             const btnConfirm = document.getElementById('modal-confirm');
-            
             modal.classList.remove('hidden');
-
-            // Limpa eventos anteriores
-            btnConfirm.onclick = null;
-            btnCancel.onclick = null;
-
+            btnConfirm.onclick = null; btnCancel.onclick = null;
             if (isConfirm) {
                 btnCancel.classList.remove('hidden');
                 btnCancel.onclick = () => modal.classList.add('hidden');
-                btnConfirm.onclick = () => {
-                    modal.classList.add('hidden');
-                    if(onConfirm) onConfirm();
-                };
+                btnConfirm.onclick = () => { modal.classList.add('hidden'); if(onConfirm) onConfirm(); };
             } else {
                 btnCancel.classList.add('hidden');
                 btnConfirm.onclick = () => modal.classList.add('hidden');
             }
         }
 
-        // --- SISTEMA DE NAVEGAÇÃO ---
+        // --- MENU DE CONTEXTO ---
+        const contextMenu = document.getElementById('custom-context-menu');
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            contextMenu.style.top = `${e.pageY}px`;
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.classList.remove('hidden');
+        });
+        document.addEventListener('click', () => contextMenu.classList.add('hidden'));
+
+        function handleContextAction(action) {
+            if (action === 'delete') {
+                if (jm && jm.get_selected_node()) {
+                    const node = jm.get_selected_node();
+                    if(node.isroot) return showModal("Erro", "Não é possível excluir o nó raiz.");
+                    jm.remove_node(node);
+                } else {
+                    if (window.currentProjectId) deleteCurrentProject();
+                }
+            } else if (action === 'edit') {
+                if (jm && jm.get_selected_node()) jm.begin_edit(jm.get_selected_node());
+                else showModal("Aviso", "Edite o título diretamente no campo superior.");
+            } else if (action === 'move') {
+                showModal("Info", "No Mapa Mental, arraste o nó para mover. No Editor de Texto, selecione e arraste.");
+            }
+            contextMenu.classList.add('hidden');
+        }
+
+        // --- NAVEGAÇÃO E LÓGICA DE PROJETOS ---
         function showView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             const headerTitle = document.getElementById('header-title');
-            
             if (viewName === 'dashboard') {
                 document.getElementById('view-dashboard').classList.remove('hidden');
                 headerTitle.innerText = "Meu Hub de Projetos";
@@ -240,7 +262,7 @@
         }
 
         function createNewProject(type) {
-            window.currentProjectId = null; // Zera o ID ativo
+            window.currentProjectId = null;
             if (type === 'text') {
                 document.getElementById('text-title').value = '';
                 quill.root.innerHTML = '';
@@ -248,82 +270,47 @@
                 showView('text-editor');
             } else {
                 document.getElementById('map-title').value = '';
-                initJsMind(null); // Cria mapa zerado
+                initJsMind(null);
                 document.getElementById('btn-del-map').classList.add('hidden');
                 showView('map-editor');
             }
         }
 
-        // --- INTEGRAÇÃO COM FIREBASE (SALVAR, CARREGAR, EXCLUIR) ---
-
         async function saveProject(type) {
             if(!window.currentUser) return showModal("Erro", "Você não está autenticado.");
-
-            let title, content;
-            if(type === 'text') {
-                title = document.getElementById('text-title').value || "Documento sem título";
-                content = quill.root.innerHTML;
-            } else {
-                title = document.getElementById('map-title').value || "Mapa sem título";
-                content = JSON.stringify(jm.get_data()); // Transforma o mapa em texto para salvar
-            }
-
+            let title = type === 'text' ? document.getElementById('text-title').value : document.getElementById('map-title').value;
+            let content = type === 'text' ? quill.root.innerHTML : JSON.stringify(jm.get_data());
             try {
                 if(window.currentProjectId) {
-                    // Atualiza projeto existente
-                    await window.updateDoc(window.doc(window.db, "projects", window.currentProjectId), {
-                        title: title, content: content, updatedAt: window.serverTimestamp()
-                    });
-                    showModal("Sucesso!", "Seu projeto foi atualizado com sucesso.");
+                    await window.updateDoc(window.doc(window.db, "projects", window.currentProjectId), { title, content, updatedAt: window.serverTimestamp() });
+                    showModal("Sucesso!", "Projeto atualizado.");
                 } else {
-                    // Cria novo projeto
-                    const docRef = await window.addDoc(window.collection(window.db, "projects"), {
-                        userId: window.currentUser.uid, type: type, title: title, content: content, createdAt: window.serverTimestamp()
-                    });
+                    const docRef = await window.addDoc(window.collection(window.db, "projects"), { userId: window.currentUser.uid, type, title, content, createdAt: window.serverTimestamp() });
                     window.currentProjectId = docRef.id;
-                    // Mostra o botão de excluir
                     document.getElementById(`btn-del-${type}`).classList.remove('hidden');
-                    showModal("Sucesso!", "Novo projeto salvo na nuvem!");
+                    showModal("Sucesso!", "Projeto salvo!");
                 }
-                loadProjects(); // Atualiza a grade invisivelmente
-            } catch (error) {
-                showModal("Erro ao Salvar", error.message);
-            }
+                loadProjects();
+            } catch (error) { showModal("Erro", error.message); }
         }
 
         async function loadProjects() {
             if(!window.currentUser) return;
             const grid = document.getElementById('projects-grid');
-            grid.innerHTML = '<p class="text-slate-500">Buscando na nuvem...</p>';
-
+            grid.innerHTML = '<p class="text-slate-500">Carregando...</p>';
             try {
                 const q = window.query(window.collection(window.db, "projects"), window.where("userId", "==", window.currentUser.uid));
                 const querySnapshot = await window.getDocs(q);
-                
                 grid.innerHTML = '';
-                if(querySnapshot.empty) {
-                    grid.innerHTML = '<p class="text-slate-500 col-span-3">Nenhum projeto encontrado. Crie um novo!</p>';
-                    return;
-                }
-
+                if(querySnapshot.empty) { grid.innerHTML = '<p class="text-slate-500">Nenhum projeto encontrado.</p>'; return; }
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    const isText = data.type === 'text';
-                    const icon = isText ? '<i class="fa-solid fa-file-lines"></i>' : '<i class="fa-solid fa-diagram-project"></i>';
-                    const color = isText ? 'blue' : 'purple';
-                    
-                    // Converte os dados para passar na função de clique
                     const safeData = encodeURIComponent(JSON.stringify({ id: docSnap.id, ...data }));
-
                     grid.innerHTML += `
-                        <div onclick="openProject('${safeData}')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:border-${color}-300 transition-all cursor-pointer flex flex-col h-40">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="text-xs font-medium bg-${color}-50 text-${color}-700 px-3 py-1 rounded-full">${isText ? 'Texto' : 'Mapa Mental'}</span>
-                                <div class="text-${color}-400">${icon}</div>
-                            </div>
-                            <h4 class="font-semibold text-lg text-slate-900 truncate">${data.title}</h4>
-                        </div>
-                    `;
+                        <div onclick="openProject('${safeData}')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all cursor-pointer h-40">
+                            <span class="text-xs font-medium text-${data.type === 'text' ? 'blue' : 'purple'}-700">${data.type === 'text' ? 'Texto' : 'Mapa Mental'}</span>
+                            <h4 class="font-semibold text-lg mt-2 truncate">${data.title}</h4>
+                        </div>`;
                 });
             } catch (error) { grid.innerHTML = `<p class="text-red-500">Erro: ${error.message}</p>`; }
         }
@@ -331,7 +318,6 @@
         function openProject(encodedData) {
             const data = JSON.parse(decodeURIComponent(encodedData));
             window.currentProjectId = data.id;
-
             if (data.type === 'text') {
                 document.getElementById('text-title').value = data.title;
                 quill.root.innerHTML = data.content;
@@ -339,19 +325,18 @@
                 showView('text-editor');
             } else {
                 document.getElementById('map-title').value = data.title;
-                initJsMind(JSON.parse(data.content)); // Recarrega o mapa do banco
+                initJsMind(JSON.parse(data.content));
                 document.getElementById('btn-del-map').classList.remove('hidden');
                 showView('map-editor');
             }
         }
 
-        function deleteCurrentProject(type) {
-            showModal("Atenção", "Tem certeza que deseja excluir este projeto para sempre?", true, async () => {
-                if(!window.currentProjectId) return;
+        function deleteCurrentProject() {
+            showModal("Atenção", "Tem certeza que deseja excluir?", true, async () => {
                 try {
                     await window.deleteDoc(window.doc(window.db, "projects", window.currentProjectId));
                     window.currentProjectId = null;
-                    showModal("Excluído", "Projeto removido com sucesso.");
+                    showModal("Excluído", "Projeto removido.");
                     loadProjects();
                     showView('dashboard');
                 } catch(error) { showModal("Erro", error.message); }
@@ -359,29 +344,18 @@
         }
 
         // --- INICIALIZAR EDITORES ---
-        var quill = new Quill('#editor-container', {
-            theme: 'snow',
-            placeholder: 'Comece a escrever...',
-            modules: { toolbar: [ [{ 'font': [] }, { 'size': [] }], ['bold', 'italic', 'underline', 'strike'], [{ 'color': [] }, { 'background': [] }], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'align': [] }], ['clean'] ] }
-        });
-
+        var quill = new Quill('#editor-container', { theme: 'snow', modules: { toolbar: [ [{ 'font': [] }, { 'size': [] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean'] ] } });
         var jm = null;
         function initJsMind(data) {
-            var mind = data || {
-                "meta": { "name": "novo", "author": "voce", "version": "1.0" },
-                "format": "node_array",
-                "data": [ {"id":"root", "isroot":true, "topic":"Ideia Central"} ]
-            };
+            var mind = data || { "meta": { "name": "novo", "author": "voce", "version": "1.0" }, "format": "node_array", "data": [ {"id":"root", "isroot":true, "topic":"Ideia Central"} ] };
             var options = { container: 'jsmind_container', editable: true, theme: 'primary' };
             if(jm) { jm.show(mind); } else { jm = jsMind.show(options, mind); }
         }
-
         function addMapNode() {
             if(!jm) return;
             var selected_node = jm.get_selected_node();
-            if(!selected_node) return showModal("Aviso", "Por favor, clique em um nó (caixa) primeiro para adicionar um filho.");
-            var nodeid = jsMind.util.uuid.newid();
-            jm.add_node(selected_node, nodeid, '* Novo Tópico *');
+            if(!selected_node) return showModal("Aviso", "Selecione um nó primeiro.");
+            jm.add_node(selected_node, jsMind.util.uuid.newid(), '* Novo Tópico *');
         }
     </script>
 </body>
