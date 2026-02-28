@@ -3,34 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <title>Hub de Notas</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <title>NoteHub Pro</title>
 </head>
 <body>
     <div id="login-screen">
-        <h1>Meu Bloco de Notas</h1>
+        <h1>NoteHub Pro</h1>
         <button id="btn-login">Entrar com Google</button>
     </div>
 
     <div id="app" style="display: none;">
         <aside id="sidebar">
-            <button id="btn-novo">Nova Nota +</button>
+            <button id="btn-novo">+ Nova Nota</button>
             <ul id="lista-arquivos"></ul>
-            <button id="btn-logout">Sair</button>
         </aside>
 
         <main id="editor-container">
             <div class="toolbar">
-                <button onclick="document.execCommand('bold')"><b>B</b></button>
-                <button onclick="document.execCommand('italic')"><i>I</i></button>
-                <button onclick="document.execCommand('hiliteColor', false, 'yellow')">Grifar</button>
-                <button onclick="window.print()">Imprimir</button>
+                <button onclick="execCmd('bold')"><b>B</b></button>
+                <button onclick="execCmd('italic')"><i>I</i></button>
+                <select onchange="execCmd('fontName', this.value)">
+                    <option value="Arial">Arial</option>
+                    <option value="Courier New">Courier</option>
+                    <option value="Times New Roman">Times</option>
+                </select>
+                <button onclick="execCmd('hiliteColor', 'yellow')">🟨</button>
+                <button onclick="adicionarImagem()">🖼️</button>
+                <button onclick="inserirMapaMental()">🧠 Mapa</button>
+                <button onclick="window.print()">🖨️</button>
             </div>
             <input type="text" id="titulo-nota" placeholder="Título da nota...">
             <div id="editor" contenteditable="true"></div>
-            <button id="btn-salvar">Salvar Nota</button>
+            <button id="btn-salvar">Salvar no Cloud</button>
         </main>
     </div>
-
     <script type="module" src="app.js"></script>
 </body>
 </html>
