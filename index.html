@@ -35,28 +35,41 @@
             background-color: #f8fafc;
             border-radius: 1rem; 
             border: 1px solid #e2e8f0;
+            overflow: auto; /* Permite mover o mapa com scroll */
         }
 
-        /* ESTILO DE IMPRESSÃO - ESCONDE O QUE NÃO INTERESSA */
+        /* ESTILO DE IMPRESSÃO - IMPRIME APENAS O CONTEÚDO */
         @media print {
-            aside, header, .flex.gap-2, .bg-white.p-2.rounded-2xl, button, .ql-toolbar {
+            aside, header, .flex.gap-2, .bg-white.p-2.rounded-2xl, button, .ql-toolbar, #toast, #confirm-modal {
                 display: none !important;
             }
-            main { p: 0 !important; margin: 0 !important; }
-            .view-section { display: block !important; }
+            .hidden { display: none !important; }
+            #main-app { display: block !important; height: auto !important; }
+            main { padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; }
+            .flex-1.p-8.overflow-y-auto { overflow: visible !important; padding: 0 !important; }
+            .view-section { display: block !important; max-width: 100% !important; margin: 0 !important; }
+            
             #editor-container, #jsmind_container { 
                 border: none !important; 
                 height: auto !important; 
                 width: 100% !important;
+                overflow: visible !important;
             }
+            .ql-editor { height: auto !important; overflow-y: visible !important; padding: 0 !important; }
+            
+            /* Ajuste de imagens na impressão */
+            img { max-width: 100% !important; height: auto !important; page-break-inside: avoid; }
+            
             body { background: white; }
+            /* Esconde o grid de projetos na hora de imprimir */
+            #view-dashboard { display: none !important; }
         }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyC08uBaH3okS0pdOkMM9wWS2c_sTt6_UTU",
@@ -74,7 +87,7 @@
         const provider = new GoogleAuthProvider();
 
         window.db = db; window.auth = auth;
-        window.collection = collection; window.addDoc = addDoc; window.getDocs = getDocs;
+        window.collection = collection; window.addDoc = addDoc; window.getDocs = getDocs; window.getDoc = getDoc;
         window.doc = doc; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
         window.query = query; window.where = where; window.serverTimestamp = serverTimestamp;
 
@@ -97,7 +110,7 @@
         });
     </script>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 relative">
 
     <div id="main-app" class="hidden min-h-screen">
         <aside class="w-72 bg-dark text-slate-300 p-6 flex flex-col shadow-xl">
@@ -114,7 +127,7 @@
                 <img id="user-photo" class="h-10 w-10 rounded-full">
                 <div class="flex-1 overflow-hidden">
                     <p id="user-name" class="text-sm font-bold text-white truncate"></p>
-                    <button onclick="logout()" class="text-xs text-red-400 font-semibold">Sair</button>
+                    <button onclick="logout()" class="text-xs text-red-400 font-semibold hover:text-red-300 transition-colors">Sair</button>
                 </div>
             </div>
         </aside>
@@ -128,12 +141,12 @@
                 
                 <div id="view-dashboard" class="view-section block max-w-6xl mx-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                        <button onclick="createNewProject('text')" class="p-8 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-brand-500 text-left transition-all">
-                            <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-plus"></i></div>
+                        <button onclick="createNewProject('text')" class="p-8 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-brand-500 hover:shadow-lg text-left transition-all group">
+                            <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i class="fa-solid fa-plus"></i></div>
                             <h3 class="text-xl font-bold">Novo Texto</h3>
                         </button>
-                        <button onclick="createNewProject('map')" class="p-8 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-purple-500 text-left transition-all">
-                            <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-diagram-project"></i></div>
+                        <button onclick="createNewProject('map')" class="p-8 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-purple-500 hover:shadow-lg text-left transition-all group">
+                            <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i class="fa-solid fa-diagram-project"></i></div>
                             <h3 class="text-xl font-bold">Novo Mapa Mental</h3>
                         </button>
                     </div>
@@ -142,28 +155,28 @@
 
                 <div id="view-text-editor" class="view-section hidden flex-col h-full max-w-5xl mx-auto">
                     <div class="flex justify-between items-center mb-6 gap-4">
-                        <input type="text" id="text-title" placeholder="Título" class="bg-transparent text-3xl font-bold outline-none flex-1">
+                        <input type="text" id="text-title" placeholder="Título do Documento" class="bg-transparent text-3xl font-bold outline-none flex-1 text-slate-800">
                         <div class="flex gap-2">
-                            <button onclick="window.print()" class="bg-slate-100 p-2 px-4 rounded-xl hover:bg-slate-200" title="Imprimir"><i class="fa-solid fa-print"></i></button>
-                            <button onclick="saveProject('text')" class="bg-brand-500 text-white px-6 py-2 rounded-xl font-bold">Salvar</button>
-                            <button onclick="showView('dashboard')" class="bg-slate-200 px-6 py-2 rounded-xl font-bold">Voltar</button>
+                            <button onclick="window.print()" class="bg-slate-100 p-2 px-4 rounded-xl hover:bg-slate-200 text-slate-700 transition-colors" title="Imprimir Documento"><i class="fa-solid fa-print"></i></button>
+                            <button onclick="saveProject('text')" class="bg-brand-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-brand-600 transition-colors">Salvar</button>
+                            <button onclick="showView('dashboard')" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold hover:bg-slate-300 transition-colors">Voltar</button>
                         </div>
                     </div>
-                    <div id="editor-container" class="bg-white"></div>
+                    <div id="editor-container" class="bg-white shadow-sm"></div>
                 </div>
 
                 <div id="view-map-editor" class="view-section hidden flex-col h-full">
                     <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                        <input type="text" id="map-title" placeholder="Título do Mapa" class="bg-transparent text-3xl font-bold outline-none flex-1">
+                        <input type="text" id="map-title" placeholder="Título do Mapa" class="bg-transparent text-3xl font-bold outline-none flex-1 text-slate-800">
                         <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border">
-                            <button onclick="window.print()" class="p-2 hover:bg-slate-100 rounded-lg"><i class="fa-solid fa-print"></i></button>
+                            <button onclick="window.print()" class="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors" title="Imprimir Mapa"><i class="fa-solid fa-print"></i></button>
                             <div class="w-px h-6 bg-slate-200 mx-2"></div>
-                            <button onclick="addMapNode()" class="bg-dark text-white px-4 py-2 rounded-xl text-sm font-bold"> + Nó</button>
-                            <button onclick="saveProject('map')" class="bg-brand-500 text-white px-6 py-2 rounded-xl font-bold">Salvar</button>
-                            <button onclick="showView('dashboard')" class="bg-slate-200 px-4 py-2 rounded-xl font-bold">Sair</button>
+                            <button onclick="addMapNode()" class="bg-dark text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"> <i class="fa-solid fa-plus mr-1"></i> Tópico</button>
+                            <button onclick="saveProject('map')" class="bg-brand-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-brand-600 transition-colors">Salvar</button>
+                            <button onclick="showView('dashboard')" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 transition-colors">Sair</button>
                         </div>
                     </div>
-                    <div id="jsmind_container"></div>
+                    <div id="jsmind_container" class="shadow-sm"></div>
                 </div>
 
             </div>
@@ -173,7 +186,7 @@
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-md w-full border">
             <i class="fa-solid fa-layer-group text-brand-500 text-6xl mb-6"></i>
-            <h1 class="text-3xl font-black mb-2">NoteHub Pro</h1>
+            <h1 class="text-3xl font-black mb-2 text-slate-800">NoteHub Pro</h1>
             <p class="text-slate-500 mb-8">Faça login para começar a criar.</p>
             <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-brand-600 transition-all">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 bg-white rounded-full p-1"> Entrar com Google
@@ -181,13 +194,70 @@
         </div>
     </div>
 
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium pointer-events-none"></div>
+
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full transform transition-all">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 text-2xl mx-auto"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Atenção</h3>
+            <p id="confirm-text" class="text-slate-500 text-center mb-8"></p>
+            <div class="flex gap-4">
+                <button onclick="closeConfirm()" class="flex-1 bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
+                <button id="confirm-btn" class="flex-1 bg-red-500 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-600 transition-colors">Excluir</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmind@0.5.3/js/jsmind.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmind@0.5.3/js/jsmind.draggable.js"></script>
 
     <script>
         let currentProjectId = null;
         let jm = null;
-        const quill = new Quill('#editor-container', { theme: 'snow', placeholder: 'Comece a escrever...' });
+        
+        // Configurando editor de texto com suporte a imagem
+        const quill = new Quill('#editor-container', { 
+            theme: 'snow', 
+            placeholder: 'Comece a escrever...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['image', 'link', 'blockquote'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // ================= POPUPS CUSTOMIZADOS =================
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = type === 'success' ? `<i class="fa-solid fa-check-circle text-xl"></i> ${msg}` : `<i class="fa-solid fa-circle-exclamation text-xl"></i> ${msg}`;
+            toast.className = `fixed bottom-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium transform transition-all duration-300 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+            
+            setTimeout(() => { toast.classList.remove('translate-y-20', 'opacity-0'); }, 10);
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        let confirmAction = null;
+        function showConfirm(msg, callback) {
+            document.getElementById('confirm-text').innerText = msg;
+            confirmAction = callback;
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeConfirm() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            document.getElementById('confirm-modal').classList.remove('flex');
+        }
+        document.getElementById('confirm-btn').addEventListener('click', () => {
+            if(confirmAction) confirmAction();
+            closeConfirm();
+        });
+        // ========================================================
 
         function showView(view) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
@@ -201,7 +271,6 @@
             grid.innerHTML = '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-brand-500"></i></div>';
             
             try {
-                // Removido o orderBy para evitar erro de índice no Firebase
                 const q = window.query(
                     window.collection(window.db, "projects"), 
                     window.where("userId", "==", window.currentUser.uid)
@@ -210,7 +279,7 @@
                 grid.innerHTML = '';
 
                 if (snap.empty) {
-                    grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Nenhum projeto ainda.</p>';
+                    grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Nenhum projeto ainda. Crie algo acima!</p>';
                     return;
                 }
 
@@ -219,19 +288,19 @@
                     const card = document.createElement('div');
                     card.className = "bg-white p-6 rounded-[2rem] border hover:shadow-xl transition-all cursor-pointer group relative";
                     card.innerHTML = `
-                        <div onclick="openProject('${docSnap.id}', '${p.type}')">
-                            <div class="w-10 h-10 ${p.type === 'text' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'} rounded-xl flex items-center justify-center mb-4">
+                        <div onclick="openProject('${docSnap.id}', '${p.type}')" class="h-full">
+                            <div class="w-10 h-10 ${p.type === 'text' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                 <i class="fa-solid ${p.type === 'text' ? 'fa-file-lines' : 'fa-diagram-project'}"></i>
                             </div>
                             <h4 class="font-bold text-slate-800 truncate pr-8">${p.title}</h4>
-                            <p class="text-xs text-slate-400 mt-2 uppercase font-bold tracking-widest">${p.type}</p>
+                            <p class="text-xs text-slate-400 mt-2 uppercase font-bold tracking-widest">${p.type === 'text' ? 'Documento' : 'Mapa Mental'}</p>
                         </div>
-                        <button onclick="deleteSavedProject('${docSnap.id}')" class="absolute top-6 right-6 text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="deleteSavedProject('${docSnap.id}')" class="absolute top-6 right-6 text-slate-300 hover:text-red-500 bg-white rounded-full p-1 transition-colors" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                     `;
                     grid.appendChild(card);
                 });
             } catch (e) { 
-                grid.innerHTML = '<p class="text-red-500">Erro ao carregar. Verifique o console.</p>';
+                grid.innerHTML = '<p class="text-red-500 font-bold p-4">Erro ao carregar projetos. Verifique a conexão.</p>';
                 console.error(e); 
             }
         }
@@ -240,7 +309,9 @@
             const title = document.getElementById(type === 'text' ? 'text-title' : 'map-title').value;
             const content = type === 'text' ? quill.root.innerHTML : JSON.stringify(jm.get_data());
 
-            if (!title.trim()) return alert("Dê um título!");
+            if (!title.trim()) {
+                return showToast("Por favor, dê um título ao seu projeto!", "error");
+            }
 
             const data = {
                 title, content, type,
@@ -255,33 +326,51 @@
                     const docRef = await window.addDoc(window.collection(window.db, "projects"), data);
                     currentProjectId = docRef.id;
                 }
-                alert("Salvo!");
+                showToast("Projeto salvo com sucesso!", "success");
                 loadProjects();
-            } catch (e) { alert("Erro ao salvar!"); }
+            } catch (e) { 
+                console.error(e);
+                showToast("Erro ao salvar o projeto. Tente novamente.", "error"); 
+            }
         }
 
         async function openProject(id, type) {
             currentProjectId = id;
-            const q = window.query(window.collection(window.db, "projects"));
-            const snap = await window.getDocs(q);
-            const p = snap.docs.find(d => d.id === id).data();
-
-            if (type === 'text') {
-                document.getElementById('text-title').value = p.title;
-                quill.root.innerHTML = p.content;
-                showView('text-editor');
-            } else {
-                document.getElementById('map-title').value = p.title;
-                initJsMind(JSON.parse(p.content));
-                showView('map-editor');
+            try {
+                // Busca o documento específico no banco de dados para garantir os dados mais recentes
+                const docRef = window.doc(window.db, "projects", id);
+                const docSnap = await window.getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const p = docSnap.data();
+                    if (type === 'text') {
+                        document.getElementById('text-title').value = p.title;
+                        quill.root.innerHTML = p.content;
+                        showView('text-editor');
+                    } else {
+                        document.getElementById('map-title').value = p.title;
+                        initJsMind(JSON.parse(p.content));
+                        showView('map-editor');
+                    }
+                } else {
+                    showToast("Este projeto não foi encontrado.", "error");
+                }
+            } catch(e) {
+                console.error(e);
+                showToast("Falha ao abrir o projeto.", "error");
             }
         }
 
-        async function deleteSavedProject(id) {
-            if (confirm("Excluir projeto?")) {
-                await window.deleteDoc(window.doc(window.db, "projects", id));
-                loadProjects();
-            }
+        function deleteSavedProject(id) {
+            showConfirm("Tem certeza de que deseja excluir permanentemente este projeto?", async () => {
+                try {
+                    await window.deleteDoc(window.doc(window.db, "projects", id));
+                    loadProjects();
+                    showToast("Projeto excluído.", "success");
+                } catch(e) {
+                    showToast("Erro ao excluir o projeto.", "error");
+                }
+            });
         }
 
         function createNewProject(type) {
@@ -299,14 +388,31 @@
 
         function initJsMind(data) {
             const mind = data || { "meta": { "name": "novo" }, "format": "node_array", "data": [{ "id": "root", "isroot": true, "topic": "Ideia Central" }] };
-            if (jm) { jm.show(mind); }
-            else { jm = jsMind.show({ container: 'jsmind_container', editable: true, theme: 'primary' }, mind); }
+            const options = {
+                container: 'jsmind_container',
+                editable: true,
+                theme: 'primary',
+                support_html: true,
+                view: {
+                    hmargin: 50,
+                    vmargin: 50
+                }
+            };
+            
+            if (jm) { 
+                jm.show(mind); 
+            } else { 
+                jm = jsMind.show(options, mind); 
+            }
         }
 
         function addMapNode() {
             const selected = jm.get_selected_node();
-            if (selected) jm.add_node(selected, jsMind.util.uuid.newid(), 'Novo Tópico');
-            else alert("Selecione um tópico primeiro!");
+            if (selected) {
+                jm.add_node(selected, jsMind.util.uuid.newid(), 'Novo Tópico');
+            } else {
+                showToast("Clique em um tópico primeiro para criar uma ramificação!", "error");
+            }
         }
     </script>
 </body>
